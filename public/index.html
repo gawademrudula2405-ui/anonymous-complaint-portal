@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Anonymous Complaint Portal</title>
+
+<style>
+body{
+font-family: Arial;
+text-align:center;
+background:#f4f6f8;
+margin-top:120px;
+}
+
+h1{
+color:#2c3e50;
+}
+
+button{
+padding:15px 30px;
+margin:20px;
+font-size:18px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+
+.formBtn{
+background:#3498db;
+color:white;
+}
+
+.trackBtn{
+background:#2ecc71;
+color:white;
+}
+
+button:hover{
+opacity:0.9;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>Welcome to Anonymous Complaint Portal</h1>
+
+<p>Please choose an option</p>
+
+<button class="formBtn" onclick="openForm()">
+Submit Anonymous Complaint
+</button>
+
+<br>
+
+<button class="trackBtn" onclick="openTrack()">
+Track Complaint
+</button>
+
+<script>
+
+function openForm(){
+window.location.href="form.html";
+}
+
+function openTrack(){
+window.location.href="track.html";
+}
+
+</script>
+
+</body>
+</html>
