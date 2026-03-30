@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Panel</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial;
+}
+
+/* SIDEBAR */
+.sidebar{
+    width:220px;
+    height:100vh;
+    background:#2c3e50;
+    color:white;
+    position:fixed;
+    padding:20px;
+}
+
+.sidebar h2{
+    text-align:center;
+}
+
+.sidebar button{
+    width:100%;
+    padding:10px;
+    margin:5px 0;
+    background:none;
+    border:none;
+    color:white;
+    text-align:left;
+    cursor:pointer;
+}
+
+.sidebar button:hover{
+    background:#34495e;
+}
+
+/* MAIN CONTENT */
+.main{
+    margin-left:240px;
+    padding:20px;
+}
+
+/* TABLE */
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+}
+
+th,td{
+    padding:10px;
+    border:1px solid #ccc;
+}
+
+/* NOTIFICATION */
+.badge{
+    background:red;
+    color:white;
+    padding:5px 10px;
+    border-radius:50%;
+}
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <h2>Admin</h2>
+
+    <button onclick="load()">📋 Complaints</button>
+
+    <button onclick="toggleHistory()">📅 History ▼</button>
+
+    <div id="historyMenu" style="display:none; padding-left:10px;">
+        <button onclick="history('recent')">Recent</button>
+        <button onclick="history('week')">Last Week</button>
+        <button onclick="history('month')">This Month</button>
+    </div>
+
+    <button onclick="profile()">👤 Profile</button>
+    <button onclick="logout()">🚪 Logout</button>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+<h2>
+Admin Panel 🔔 <span id="badge" class="badge">0</span>
+</h2>
+
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Title</th>
+<th>File</th>
+<th>Status</th>
+<th>Action</th>
+<th>Date</th>
+<th>Update</th>
+</tr>
+</thead>
+
+<tbody id="data"></tbody>
+</table>
+
+</div>
+
+<script>
+// 🔐 AUTH CHECK
+fetch("/check-auth").then(res=>{
+if(res.status!==200){
+alert("Login first");
+window.location="/admin/login.html";
+}
+});
+
+// TOGGLE HISTORY MENU
+function toggleHistory(){
+    let menu = document.getElementById("historyMenu");
+    menu.style.display = menu.style.display === "none" ? "block" : "none";
+}
+
+// LOAD COMPLAINTS
+function load(){
+fetch("/admin-complaints")
+.then(res=>res.json())
+.then(show);
+
+loadNotifications();
+}
+
+// SHOW DATA
+function show(data){
+let html="";
+data.forEach(c=>{
+html+=`
+<tr>
+<td>${c.id}</td>
+<td>${c.title}</td>
+<td>${c.file ? `<a href="/uploads/${c.file}">View</a>` : ""}</td>
+<td>
+<select id="s-${c.id}">
+<option ${c.status=="Pending"?"selected":""}>Pending</option>
+<option ${c.status=="Resolved"?"selected":""}>Resolved</option>
+</select>
+</td>
+<td><input id="a-${c.id}" value="${c.action||""}"></td>
+<td>${c.action_date||""}</td>
+<td><button onclick="update('${c.id}')">Save</button></td>
+</tr>`;
+});
+document.getElementById("data").innerHTML=html;
+}
+
+// UPDATE
+function update(id){
+fetch("/update",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+id:id,
+status:document.getElementById("s-"+id).value,
+action:document.getElementById("a-"+id).value
+})
+}).then(()=>{
+alert("Updated");
+load();
+});
+}
+
+// HISTORY
+function history(type){
+fetch("/history/"+type)
+.then(res=>res.json())
+.then(show);
+}
+
+// PROFILE
+function profile(){
+fetch("/profile")
+.then(res=>res.json())
+.then(data=>alert("Logged in as: "+data.username));
+}
+
+// LOGOUT
+function logout(){
+window.location="/logout";
+}
+
+// NOTIFICATIONS
+function loadNotifications(){
+fetch("/notifications")
+.then(res=>res.json())
+.then(data=>{
+document.getElementById("badge").innerText=data.count;
+});
+}
+
+// INITIAL LOAD
+load();
+</script>
+
+</body>
+</html>

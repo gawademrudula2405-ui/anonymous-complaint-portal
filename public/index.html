@@ -1,0 +1,19 @@
+<h2>Register Complaint</h2>
+
+<form action="/register" method="POST" enctype="multipart/form-data">
+<input name="title" placeholder="Title" required><br><br>
+
+<select name="category">
+<option value="academics">Academics</option>
+<option value="lab">Lab</option>
+</select><br><br>
+
+<textarea name="description" placeholder="Description"></textarea><br><br>
+
+<input type="file" name="file"><br><br>
+
+<button>Submit</button>
+</form>
+
+<br>
+<a href="/track.html">Track Complaint</a>

@@ -1,0 +1,24 @@
+<h2>Track Complaint</h2>
+
+<input id="id" placeholder="Complaint ID">
+<button onclick="track()">Track</button>
+
+<pre id="result"></pre>
+
+<script>
+function track(){
+    let id = document.getElementById("id").value;
+
+    fetch("/track/" + id)
+    .then(res => res.text())
+    .then(data => {
+        try{
+            let json = JSON.parse(data);
+            document.getElementById("result").innerText =
+            "Status: " + json.status + "\nAction: " + json.action;
+        }catch{
+            document.getElementById("result").innerText = "❌ Complaint Not Found";
+        }
+    });
+}
+</script>
