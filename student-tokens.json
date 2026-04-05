@@ -1,0 +1,18 @@
+[
+  {
+    "token": "STU-A632754A",
+    "createdAt": "2026-04-04T20:17:54.109Z",
+    "createdBy": "lab",
+    "usedByStudentId": "39dd8980-eada-445f-beba-6a9b5885ea15",
+    "usedByUsername": "student7414",
+    "usedAt": "2026-04-04T20:18:24.627Z"
+  },
+  {
+    "token": "STU-05364EDB",
+    "createdAt": "2026-04-04T20:17:54.109Z",
+    "createdBy": "lab",
+    "usedByStudentId": null,
+    "usedByUsername": null,
+    "usedAt": null
+  }
+]

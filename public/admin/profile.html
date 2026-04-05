@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Profile</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(145deg, #fff7ed 0%, #f8fafc 100%);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      color: #2f241b;
+    }
+
+    .card {
+      width: min(540px, 100%);
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 28px;
+      padding: 30px;
+      box-shadow: 0 24px 60px rgba(47, 36, 27, 0.12);
+    }
+
+    .item {
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(47, 36, 27, 0.08);
+    }
+
+    .item:last-of-type {
+      border-bottom: 0;
+    }
+
+    small {
+      display: block;
+      color: #7a6c61;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font: inherit;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .primary {
+      background: #b45309;
+      color: white;
+    }
+
+    .secondary {
+      background: #ffedd5;
+      color: #b45309;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Admin Profile</h1>
+    <div class="item"><small>Name</small><strong id="name"></strong></div>
+    <div class="item"><small>Username</small><strong id="username"></strong></div>
+    <div class="item"><small>Department</small><strong id="dept"></strong></div>
+    <div class="item"><small>Role</small><strong id="role"></strong></div>
+
+    <div class="actions">
+      <button class="primary" onclick="back()">Back to Dashboard</button>
+      <button class="secondary" onclick="logout()">Logout</button>
+    </div>
+  </main>
+
+  <script>
+    const admin = JSON.parse(localStorage.getItem("adminData"));
+
+    if (!admin) {
+      location.href = "/admin/login.html";
+    } else {
+      document.getElementById("name").textContent = admin.name || "-";
+      document.getElementById("username").textContent = admin.username || "-";
+      document.getElementById("dept").textContent = admin.department || "-";
+      document.getElementById("role").textContent = admin.role || "-";
+    }
+
+    function back() {
+      location.href = "/admin/panel.html";
+    }
+
+    function logout() {
+      localStorage.removeItem("adminData");
+      location.href = "/";
+    }
+  </script>
+</body>
+</html>

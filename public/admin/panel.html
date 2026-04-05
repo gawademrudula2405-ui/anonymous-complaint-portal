@@ -1,210 +1,756 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Admin Panel</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <style>
+    :root {
+      --bg: #f7f7f4;
+      --sidebar: #1f2937;
+      --sidebar-soft: rgba(255, 255, 255, 0.1);
+      --panel: #ffffff;
+      --text: #233243;
+      --muted: #6a7a8a;
+      --accent: #c2410c;
+      --accent-soft: #ffedd5;
+      --border: rgba(35, 50, 67, 0.08);
+      --shadow: 0 22px 50px rgba(35, 50, 67, 0.1);
+      --success: #166534;
+      --success-soft: #dcfce7;
+      --danger: #b91c1c;
+      --danger-soft: #fee2e2;
+    }
 
-<style>
-body{
-    margin:0;
-    font-family:Arial;
-}
+    * { box-sizing: border-box; }
 
-/* SIDEBAR */
-.sidebar{
-    width:220px;
-    height:100vh;
-    background:#2c3e50;
-    color:white;
-    position:fixed;
-    padding:20px;
-}
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(194, 65, 12, 0.12), transparent 25%),
+        linear-gradient(145deg, #fffaf5 0%, #f5f7fa 100%);
+      color: var(--text);
+    }
 
-.sidebar h2{
-    text-align:center;
-}
+    .layout {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+    }
 
-.sidebar button{
-    width:100%;
-    padding:10px;
-    margin:5px 0;
-    background:none;
-    border:none;
-    color:white;
-    text-align:left;
-    cursor:pointer;
-}
+    .sidebar {
+      background: var(--sidebar);
+      color: white;
+      padding: 28px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
 
-.sidebar button:hover{
-    background:#34495e;
-}
+    .brand {
+      padding: 12px 10px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      margin-bottom: 10px;
+    }
 
-/* MAIN CONTENT */
-.main{
-    margin-left:240px;
-    padding:20px;
-}
+    .brand p {
+      margin: 6px 0 0;
+      color: rgba(255, 255, 255, 0.72);
+      line-height: 1.6;
+    }
 
-/* TABLE */
-table{
-    width:100%;
-    border-collapse:collapse;
-    background:white;
-}
+    .nav-btn {
+      border: 0;
+      border-radius: 16px;
+      padding: 14px 16px;
+      background: var(--sidebar-soft);
+      color: white;
+      text-align: left;
+      cursor: pointer;
+      font-weight: 700;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
 
-th,td{
-    padding:10px;
-    border:1px solid #ccc;
-}
+    .nav-btn:hover,
+    .nav-btn.active {
+      background: rgba(194, 65, 12, 0.9);
+      transform: translateX(3px);
+    }
 
-/* NOTIFICATION */
-.badge{
-    background:red;
-    color:white;
-    padding:5px 10px;
-    border-radius:50%;
-}
-</style>
+    .content {
+      padding: 30px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3rem);
+    }
+
+    .hero p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 720px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .stat,
+    .panel {
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat {
+      padding: 18px 20px;
+    }
+
+    .stat small {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .stat strong {
+      font-size: 1.8rem;
+    }
+
+    .panel {
+      padding: 20px;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .panel-head h2 {
+      margin: 0;
+    }
+
+    .complaint-list,
+    .feedback-list,
+    .token-list {
+      display: grid;
+      gap: 18px;
+    }
+
+    .complaint-card,
+    .feedback-card,
+    .token-card,
+    .profile-item,
+    .token-form {
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: #fcfcfd;
+      padding: 20px;
+    }
+
+    .complaint-top,
+    .token-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .complaint-top h3,
+    .feedback-card h3,
+    .token-card h3 {
+      margin: 0 0 6px;
+    }
+
+    .meta,
+    .feedback-meta {
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    .detail-grid,
+    .profile-card,
+    .token-layout,
+    .token-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .token-stats {
+      margin-bottom: 18px;
+    }
+
+    .detail-box {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: white;
+      padding: 14px;
+    }
+
+    .detail-box small,
+    .profile-item small {
+      display: block;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .action-editor {
+      margin-top: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .status {
+      display: inline-flex;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      background: #fff7ed;
+      color: #c2410c;
+    }
+
+    .status.resolved,
+    .status.used {
+      background: #ecfdf5;
+      color: #166534;
+    }
+
+    .status.unused {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .action-btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      background: var(--accent);
+      color: white;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .action-btn[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .action-text,
+    input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font: inherit;
+    }
+
+    .action-text {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .feedback-card small {
+      display: block;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 12px 0;
+    }
+
+    form {
+      display: grid;
+      gap: 14px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .notice {
+      display: none;
+      padding: 14px 16px;
+      border-radius: 16px;
+      font-weight: 600;
+      margin-bottom: 18px;
+    }
+
+    .notice.success {
+      display: block;
+      background: var(--success-soft);
+      color: var(--success);
+    }
+
+    .notice.error {
+      display: block;
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .stats,
+      .profile-card,
+      .detail-grid,
+      .token-layout,
+      .token-stats,
+      .row { grid-template-columns: 1fr; }
+      .content { padding: 22px; }
+    }
+  </style>
 </head>
-
 <body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <h2>Admin Panel</h2>
+        <p>Review complaints, resolve issues, and generate student access tokens in bulk.</p>
+      </div>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-    <h2>Admin</h2>
+      <button class="nav-btn active" onclick="loadComplaints('all', this)">All Complaints</button>
+      <button class="nav-btn" onclick="loadComplaints('week', this)">History: Last Week</button>
+      <button class="nav-btn" onclick="loadComplaints('month', this)">History: Last Month</button>
+      <button class="nav-btn" onclick="showTokens(this)">Student Tokens</button>
+      <button class="nav-btn" onclick="showFeedback(this)">Feedback</button>
+      <button class="nav-btn" onclick="showProfile(this)">Admin Profile</button>
+      <button class="nav-btn" onclick="logout()">Logout</button>
+    </aside>
 
-    <button onclick="load()">📋 Complaints</button>
+    <main class="content">
+      <section class="hero">
+        <div>
+          <h1 id="panelTitle">All Complaints</h1>
+          <p id="panelSubtitle">Review complaints for your assigned department and update pending items when needed.</p>
+        </div>
+      </section>
 
-    <button onclick="toggleHistory()">📅 History ▼</button>
+      <section class="stats">
+        <div class="stat">
+          <small>Total</small>
+          <strong id="totalCount">0</strong>
+        </div>
+        <div class="stat">
+          <small>Pending / Unused</small>
+          <strong id="pendingCount">0</strong>
+        </div>
+        <div class="stat">
+          <small>Resolved / Used</small>
+          <strong id="resolvedCount">0</strong>
+        </div>
+      </section>
 
-    <div id="historyMenu" style="display:none; padding-left:10px;">
-        <button onclick="history('recent')">Recent</button>
-        <button onclick="history('week')">Last Week</button>
-        <button onclick="history('month')">This Month</button>
-    </div>
+      <section class="panel">
+        <div class="panel-head">
+          <h2 id="sectionHeading">Complaint List</h2>
+        </div>
+        <div class="notice" id="panelNotice"></div>
+        <div id="data"></div>
+      </section>
+    </main>
+  </div>
 
-    <button onclick="profile()">👤 Profile</button>
-    <button onclick="logout()">🚪 Logout</button>
-</div>
+  <script>
+    let admin = null;
 
-<!-- MAIN CONTENT -->
-<div class="main">
+    async function ensureAdminSession() {
+      const response = await fetch("/api/admin/session");
+      const result = await response.json();
 
-<h2>
-Admin Panel 🔔 <span id="badge" class="badge">0</span>
-</h2>
+      if (!result.authenticated) {
+        location.href = "/admin/login.html";
+        return false;
+      }
 
-<table>
-<thead>
-<tr>
-<th>ID</th>
-<th>Title</th>
-<th>File</th>
-<th>Status</th>
-<th>Action</th>
-<th>Date</th>
-<th>Update</th>
-</tr>
-</thead>
+      admin = result.admin;
+      return true;
+    }
 
-<tbody id="data"></tbody>
-</table>
+    function setActiveButton(button) {
+      document.querySelectorAll(".nav-btn").forEach((item) => item.classList.remove("active"));
+      if (button) {
+        button.classList.add("active");
+      }
+    }
 
-</div>
+    function showNotice(type, message) {
+      const box = document.getElementById("panelNotice");
+      box.className = `notice ${type}`;
+      box.textContent = message;
+    }
 
-<script>
-// 🔐 AUTH CHECK
-fetch("/check-auth").then(res=>{
-if(res.status!==200){
-alert("Login first");
-window.location="/admin/login.html";
-}
-});
+    function clearNotice() {
+      const box = document.getElementById("panelNotice");
+      box.className = "notice";
+      box.textContent = "";
+    }
 
-// TOGGLE HISTORY MENU
-function toggleHistory(){
-    let menu = document.getElementById("historyMenu");
-    menu.style.display = menu.style.display === "none" ? "block" : "none";
-}
+    function updateStats(data) {
+      document.getElementById("totalCount").textContent = data.length;
+      document.getElementById("pendingCount").textContent = data.filter((item) => item.status !== "Resolved").length;
+      document.getElementById("resolvedCount").textContent = data.filter((item) => item.status === "Resolved").length;
+    }
 
-// LOAD COMPLAINTS
-function load(){
-fetch("/admin-complaints")
-.then(res=>res.json())
-.then(show);
+    function formatDate(value) {
+      if (!value) {
+        return "-";
+      }
 
-loadNotifications();
-}
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        return value;
+      }
 
-// SHOW DATA
-function show(data){
-let html="";
-data.forEach(c=>{
-html+=`
-<tr>
-<td>${c.id}</td>
-<td>${c.title}</td>
-<td>${c.file ? `<a href="/uploads/${c.file}">View</a>` : ""}</td>
-<td>
-<select id="s-${c.id}">
-<option ${c.status=="Pending"?"selected":""}>Pending</option>
-<option ${c.status=="Resolved"?"selected":""}>Resolved</option>
-</select>
-</td>
-<td><input id="a-${c.id}" value="${c.action||""}"></td>
-<td>${c.action_date||""}</td>
-<td><button onclick="update('${c.id}')">Save</button></td>
-</tr>`;
-});
-document.getElementById("data").innerHTML=html;
-}
+      return date.toLocaleString();
+    }
 
-// UPDATE
-function update(id){
-fetch("/update",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-id:id,
-status:document.getElementById("s-"+id).value,
-action:document.getElementById("a-"+id).value
-})
-}).then(()=>{
-alert("Updated");
-load();
-});
-}
+    function buildTable(data) {
+      if (!data.length) {
+        return "<p class='empty'>No complaints found for this view.</p>";
+      }
 
-// HISTORY
-function history(type){
-fetch("/history/"+type)
-.then(res=>res.json())
-.then(show);
-}
+      const rows = data.map((item) => `
+        <article class="complaint-card">
+          <div class="complaint-top">
+            <div>
+              <h3>${item.title || "-"}</h3>
+              <div class="meta">
+                Complaint ID: ${item.id}<br>
+                Student: ${item.studentUsername || "-"}<br>
+                Department: ${item.category || "-"}<br>
+                Created: ${formatDate(item.created_at)}
+              </div>
+            </div>
+            <span class="status ${item.status === "Resolved" ? "resolved" : ""}">${item.status || "-"}</span>
+          </div>
 
-// PROFILE
-function profile(){
-fetch("/profile")
-.then(res=>res.json())
-.then(data=>alert("Logged in as: "+data.username));
-}
+          <div class="detail-grid">
+            <div class="detail-box">
+              <small>Student Description</small>
+              <div>${item.description || "-"}</div>
+            </div>
+            <div class="detail-box">
+              <small>Admin Action Taken</small>
+              <div>${item.action || "No action yet"}</div>
+            </div>
+          </div>
 
-// LOGOUT
-function logout(){
-window.location="/logout";
-}
+          <div class="action-editor">
+            <textarea class="action-text" id="action-${item.id}" placeholder="Write what action admin has taken..." ${item.status === "Resolved" ? "disabled" : ""}>${item.status === "Resolved" ? (item.action || "") : ""}</textarea>
+            <div>
+              <button class="action-btn" onclick="resolveComplaint('${item.id}')" ${item.status === "Resolved" ? "disabled" : ""}>
+                ${item.status === "Resolved" ? "Resolved" : "Save Action and Resolve"}
+              </button>
+            </div>
+          </div>
+        </article>
+      `).join("");
 
-// NOTIFICATIONS
-function loadNotifications(){
-fetch("/notifications")
-.then(res=>res.json())
-.then(data=>{
-document.getElementById("badge").innerText=data.count;
-});
-}
+      return `<div class="complaint-list">${rows}</div>`;
+    }
 
-// INITIAL LOAD
-load();
-</script>
+    function buildFeedbackList(data) {
+      const feedbackItems = data.filter((item) => item.feedback);
 
+      if (!feedbackItems.length) {
+        return "<p class='empty'>No student feedback received yet for this department.</p>";
+      }
+
+      const moodMap = {
+        happy: "Happy",
+        okay: "Okay-ish",
+        sad: "Not happy",
+      };
+
+      const cards = feedbackItems.map((item) => `
+        <article class="feedback-card">
+          <h3>${item.title || "-"}</h3>
+          <div class="feedback-meta">
+            Complaint ID: ${item.id}<br>
+            Student: ${item.studentUsername || "-"}<br>
+            Department: ${item.category || "-"}<br>
+            Status: ${item.status || "-"}
+          </div>
+          <small>Student Feedback</small>
+          <div>${moodMap[item.feedback.mood] || item.feedback.mood || "-"}${item.feedback.message ? ` - ${item.feedback.message}` : ""}</div>
+        </article>
+      `).join("");
+
+      return `<div class="feedback-list">${cards}</div>`;
+    }
+
+    function buildProfile() {
+      return `
+        <div class="profile-card">
+          <div class="profile-item"><small>Name</small><strong>${admin.name || "-"}</strong></div>
+          <div class="profile-item"><small>Username</small><strong>${admin.username || "-"}</strong></div>
+          <div class="profile-item"><small>Department</small><strong>${admin.department || "-"}</strong></div>
+          <div class="profile-item"><small>Role</small><strong>${admin.role || "-"}</strong></div>
+        </div>
+      `;
+    }
+
+    function buildTokenView(tokens) {
+      const unused = tokens.filter((item) => !item.usedByStudentId);
+      const used = tokens.filter((item) => item.usedByStudentId);
+
+      document.getElementById("totalCount").textContent = tokens.length;
+      document.getElementById("pendingCount").textContent = unused.length;
+      document.getElementById("resolvedCount").textContent = used.length;
+
+      const tokenCards = tokens.length
+        ? tokens.map((item) => `
+            <article class="token-card">
+              <div class="token-top">
+                <div>
+                  <h3>${item.token}</h3>
+                  <div class="meta">
+                    Generated by: ${item.createdBy || "-"}<br>
+                    Created: ${formatDate(item.createdAt)}
+                  </div>
+                </div>
+                <span class="status ${item.usedByStudentId ? "used" : "unused"}">${item.usedByStudentId ? "Used" : "Unused"}</span>
+              </div>
+              <div class="detail-grid">
+                <div class="detail-box">
+                  <small>Used By</small>
+                  <div>${item.usedByUsername || "Not used yet"}</div>
+                </div>
+                <div class="detail-box">
+                  <small>Used At</small>
+                  <div>${formatDate(item.usedAt)}</div>
+                </div>
+              </div>
+            </article>
+          `).join("")
+        : "<p class='empty'>No student tokens generated yet.</p>";
+
+      return `
+        <div class="token-layout">
+          <section class="token-form">
+            <h3>Generate Tokens in Bulk</h3>
+            <p class="meta">Create a batch of pre-generated student tokens for first-time registrations.</p>
+            <form id="tokenGenerateForm">
+              <div class="row">
+                <label>
+                  Prefix
+                  <input name="prefix" value="STU" placeholder="STU">
+                </label>
+                <label>
+                  Quantity
+                  <input name="count" type="number" min="1" max="500" value="10" required>
+                </label>
+              </div>
+              <button class="action-btn" type="submit">Generate Tokens</button>
+            </form>
+          </section>
+
+          <section class="token-form">
+            <h3>Token Summary</h3>
+            <div class="token-stats">
+              <div class="detail-box"><small>Total Tokens</small><strong>${tokens.length}</strong></div>
+              <div class="detail-box"><small>Unused Tokens</small><strong>${unused.length}</strong></div>
+              <div class="detail-box"><small>Used Tokens</small><strong>${used.length}</strong></div>
+              <div class="detail-box"><small>Latest Generated</small><strong>${tokens[0] ? formatDate(tokens[0].createdAt) : "-"}</strong></div>
+            </div>
+          </section>
+        </div>
+        <div class="token-list">${tokenCards}</div>
+      `;
+    }
+
+    function buildQuery(range) {
+      const params = new URLSearchParams();
+      if (range !== "all") {
+        params.set("history", range);
+      }
+      if (admin.department && admin.department !== "All Departments") {
+        params.set("department", admin.department);
+      }
+      return params.toString() ? `?${params.toString()}` : "";
+    }
+
+    async function loadComplaints(range, button) {
+      setActiveButton(button);
+      clearNotice();
+
+      const labels = {
+        all: ["All Complaints", "Review complaints for your assigned department and update pending items when needed."],
+        week: ["History: Last Week", "Showing complaints for your department created during the last 7 days."],
+        month: ["History: Last Month", "Showing complaints for your department created during the last 30 days."],
+      };
+
+      const [title, subtitle] = labels[range];
+      document.getElementById("panelTitle").textContent = title;
+      document.getElementById("panelSubtitle").textContent = subtitle;
+      document.getElementById("sectionHeading").textContent = title;
+
+      const response = await fetch(`/api/complaints${buildQuery(range)}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        document.getElementById("data").innerHTML = `<p class="empty">${data.error || "Failed to load complaints."}</p>`;
+        updateStats([]);
+        return;
+      }
+
+      updateStats(data);
+      document.getElementById("data").innerHTML = buildTable(data);
+    }
+
+    async function showFeedback(button) {
+      setActiveButton(button);
+      clearNotice();
+      document.getElementById("panelTitle").textContent = "Feedback";
+      document.getElementById("panelSubtitle").textContent = "See what students said about the action taken on complaints in your department.";
+      document.getElementById("sectionHeading").textContent = "Student Feedback";
+
+      const response = await fetch(`/api/complaints${buildQuery("all")}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        document.getElementById("data").innerHTML = `<p class="empty">${data.error || "Failed to load feedback."}</p>`;
+        updateStats([]);
+        return;
+      }
+
+      const feedbackItems = data.filter((item) => item.feedback);
+      document.getElementById("totalCount").textContent = feedbackItems.length;
+      document.getElementById("pendingCount").textContent = data.filter((item) => item.status !== "Resolved").length;
+      document.getElementById("resolvedCount").textContent = data.filter((item) => item.status === "Resolved").length;
+      document.getElementById("data").innerHTML = buildFeedbackList(data);
+    }
+
+    async function showTokens(button) {
+      setActiveButton(button);
+      clearNotice();
+      document.getElementById("panelTitle").textContent = "Student Tokens";
+      document.getElementById("panelSubtitle").textContent = "Generate first-time access tokens in bulk and monitor which ones have already been used.";
+      document.getElementById("sectionHeading").textContent = "Token Management";
+
+      const response = await fetch("/api/admin/tokens");
+      const data = await response.json();
+
+      if (!response.ok) {
+        document.getElementById("data").innerHTML = `<p class="empty">${data.error || "Failed to load tokens."}</p>`;
+        document.getElementById("totalCount").textContent = 0;
+        document.getElementById("pendingCount").textContent = 0;
+        document.getElementById("resolvedCount").textContent = 0;
+        return;
+      }
+
+      document.getElementById("data").innerHTML = buildTokenView(data);
+
+      document.getElementById("tokenGenerateForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearNotice();
+
+        const formData = new FormData(event.currentTarget);
+        const payload = {
+          prefix: String(formData.get("prefix") || "STU").trim(),
+          count: Number(formData.get("count") || 10),
+        };
+
+        const generateResponse = await fetch("/api/admin/tokens/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+        const result = await generateResponse.json();
+
+        if (!generateResponse.ok) {
+          showNotice("error", result.error || "Failed to generate tokens.");
+          return;
+        }
+
+        showNotice("success", `${result.message} Latest batch: ${result.tokens.map((item) => item.token).join(", ")}`);
+        showTokens(button);
+      }, { once: true });
+    }
+
+    function showProfile(button) {
+      setActiveButton(button);
+      clearNotice();
+      document.getElementById("panelTitle").textContent = "Admin Profile";
+      document.getElementById("panelSubtitle").textContent = "Current admin information for the signed-in account.";
+      document.getElementById("sectionHeading").textContent = "Profile Details";
+      document.getElementById("totalCount").textContent = "-";
+      document.getElementById("pendingCount").textContent = "-";
+      document.getElementById("resolvedCount").textContent = "-";
+      document.getElementById("data").innerHTML = buildProfile();
+    }
+
+    async function resolveComplaint(id) {
+      const action = document.getElementById(`action-${id}`).value.trim();
+      const response = await fetch(`/resolve/${id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        showNotice("error", result.error || "Failed to resolve complaint.");
+        return;
+      }
+
+      showNotice("success", result.message || "Complaint updated successfully.");
+      const activeButton = document.querySelector(".nav-btn.active");
+      const activeText = activeButton ? activeButton.textContent.trim() : "All Complaints";
+      let range = "all";
+      if (activeText.includes("Last Week")) {
+        range = "week";
+      } else if (activeText.includes("Last Month")) {
+        range = "month";
+      }
+      loadComplaints(range, activeButton || document.querySelectorAll(".nav-btn")[0]);
+    }
+
+    async function logout() {
+      await fetch("/api/admin/logout", { method: "POST" });
+      location.href = "/";
+    }
+
+    (async () => {
+      const ok = await ensureAdminSession();
+      if (ok) {
+        loadComplaints("all", document.querySelectorAll(".nav-btn")[0]);
+      }
+    })();
+  </script>
 </body>
 </html>

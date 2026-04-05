@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Portal</title>
+  <style>
+    :root {
+      --bg: #eef7f7;
+      --panel: rgba(255, 255, 255, 0.94);
+      --panel-strong: #ffffff;
+      --text: #17313b;
+      --muted: #5b7280;
+      --accent: #0f766e;
+      --accent-soft: #ccfbf1;
+      --border: rgba(15, 118, 110, 0.16);
+      --danger: #be123c;
+      --danger-soft: #ffe4e6;
+      --success: #166534;
+      --success-soft: #dcfce7;
+      --shadow: 0 24px 60px rgba(23, 49, 59, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(15, 118, 110, 0.2), transparent 28%),
+        linear-gradient(145deg, #f4fbfb 0%, #e8f4f5 100%);
+      padding: 24px;
+    }
+
+    .page {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      display: grid;
+      gap: 24px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    h1, h2, h3 {
+      margin-top: 0;
+    }
+
+    p {
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .panel {
+      padding: 28px;
+    }
+
+    .option-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .option-card {
+      border-radius: 22px;
+      border: 1px solid var(--border);
+      background: var(--panel-strong);
+      padding: 22px;
+      box-shadow: 0 16px 40px rgba(15, 118, 110, 0.08);
+      display: grid;
+      gap: 12px;
+    }
+
+    .option-card button,
+    button,
+    .link-btn {
+      border: 0;
+      border-radius: 16px;
+      padding: 14px 18px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.primary,
+    .link-btn.primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    button.secondary,
+    .link-btn.secondary {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .link-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+    }
+
+    .form {
+      display: grid;
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      font-weight: 600;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 14px 16px;
+      background: white;
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 130px;
+      resize: vertical;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .choice-box {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      background: #f8fffd;
+    }
+
+    .choice-box label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+    }
+
+    .choice-box input[type="radio"] {
+      width: auto;
+      margin: 0;
+    }
+
+    .notice,
+    .credentials,
+    .student-card {
+      border-radius: 18px;
+      padding: 16px 18px;
+      margin-top: 18px;
+    }
+
+    .notice {
+      display: none;
+      font-weight: 600;
+    }
+
+    .notice.error {
+      display: block;
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .notice.success {
+      display: block;
+      background: var(--success-soft);
+      color: var(--success);
+    }
+
+    .credentials,
+    .student-card {
+      background: #f8fafc;
+      border: 1px solid rgba(23, 49, 59, 0.1);
+    }
+
+    .credentials {
+      display: none;
+    }
+
+    .student-card {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .muted-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    @media (max-width: 860px) {
+      .grid,
+      .option-grid,
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      .panel { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="grid">
+      <section class="panel" id="authPanel">
+        <h2>Student Access</h2>
+        <p id="authIntro">Choose one option to continue into the student portal.</p>
+
+        <div class="student-card" id="studentCard" hidden>
+          <div>
+            <strong id="studentWelcome">Logged in</strong>
+            <p id="studentMeta"></p>
+          </div>
+          <button class="secondary" id="logoutButton" type="button">Logout</button>
+        </div>
+
+        <div id="authChooser">
+          <div class="option-grid">
+            <article class="option-card">
+              <h3>Enter Token</h3>
+              <p>Use this once if you are a first-time student user.</p>
+              <button class="primary" type="button" id="showTokenFlow">Enter Token</button>
+            </article>
+
+            <article class="option-card">
+              <h3>Login</h3>
+              <p>Use your existing student username and password.</p>
+              <button class="secondary" type="button" id="showLoginFlow">Login</button>
+            </article>
+          </div>
+        </div>
+
+        <div id="tokenFlow" hidden>
+          <form class="form" id="tokenForm">
+            <label>
+              Student Token
+              <input id="tokenInput" name="token" placeholder="Enter pre-generated token" required>
+            </label>
+            <div class="muted-actions">
+              <button class="primary" type="submit">Verify Token</button>
+              <button class="secondary" type="button" id="backFromToken">Back</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="registerFlow" hidden>
+          <div class="credentials" id="verifiedTokenBox"></div>
+
+          <form class="form" id="registerForm">
+            <div class="stack">
+              <div class="choice-box">
+                <label>
+                  <input type="radio" name="mode" value="custom" checked>
+                  I want to set my own username and password
+                </label>
+              </div>
+              <div class="choice-box">
+                <label>
+                  <input type="radio" name="mode" value="system">
+                  Generate username and password automatically
+                </label>
+              </div>
+            </div>
+
+            <div id="customCredentials" class="row">
+              <label>
+                Username
+                <input id="registerUsername" name="username" placeholder="Choose username">
+              </label>
+              <label>
+                Password
+                <input id="registerPassword" name="password" type="password" placeholder="Choose password">
+              </label>
+            </div>
+
+            <div class="muted-actions">
+              <button class="primary" type="submit">Create Student Account</button>
+              <button class="secondary" type="button" id="backToToken">Back</button>
+            </div>
+          </form>
+
+          <div class="credentials" id="generatedCredentialsBox"></div>
+        </div>
+
+        <div id="loginFlow" hidden>
+          <form class="form" id="loginForm">
+            <label>
+              Username
+              <input id="loginUsername" name="username" placeholder="Enter username" required>
+            </label>
+            <label>
+              Password
+              <input id="loginPassword" name="password" type="password" placeholder="Enter password" required>
+            </label>
+            <div class="muted-actions">
+              <button class="primary" type="submit">Login</button>
+              <button class="secondary" type="button" id="backFromLogin">Back</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="notice" id="authMessage"></div>
+      </section>
+
+      <section class="panel" id="complaintPanel">
+        <h2>Complaint Form</h2>
+        <p id="complaintIntro">Login or complete token registration first to open the complaint form.</p>
+
+        <form class="form" id="complaintForm" hidden>
+          <label>
+            Complaint Title
+            <input name="title" placeholder="Enter complaint title" required>
+          </label>
+
+          <label>
+            Department
+            <select name="category" required>
+              <option value="">Select department</option>
+              <option value="Academics">Academics</option>
+              <option value="Canteen">Canteen</option>
+              <option value="Lab">Lab</option>
+              <option value="Library">Library</option>
+            </select>
+          </label>
+
+          <label>
+            Description
+            <textarea name="description" placeholder="Describe the issue" required></textarea>
+          </label>
+
+          <div class="muted-actions">
+            <button class="primary" type="submit">Submit Complaint</button>
+            <a class="link-btn secondary" href="/track.html">Track Existing Complaint</a>
+            <a class="link-btn secondary" href="/">Back to Home</a>
+          </div>
+        </form>
+
+        <div class="notice" id="complaintMessage"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      verifiedToken: "",
+      student: null,
+    };
+
+    const authChooser = document.getElementById("authChooser");
+    const tokenFlow = document.getElementById("tokenFlow");
+    const registerFlow = document.getElementById("registerFlow");
+    const loginFlow = document.getElementById("loginFlow");
+    const authMessage = document.getElementById("authMessage");
+    const complaintMessage = document.getElementById("complaintMessage");
+    const complaintForm = document.getElementById("complaintForm");
+    const complaintIntro = document.getElementById("complaintIntro");
+    const studentCard = document.getElementById("studentCard");
+    const studentWelcome = document.getElementById("studentWelcome");
+    const studentMeta = document.getElementById("studentMeta");
+    const authIntro = document.getElementById("authIntro");
+    const verifiedTokenBox = document.getElementById("verifiedTokenBox");
+    const generatedCredentialsBox = document.getElementById("generatedCredentialsBox");
+    const customCredentials = document.getElementById("customCredentials");
+    const registerUsername = document.getElementById("registerUsername");
+    const registerPassword = document.getElementById("registerPassword");
+
+    function showNotice(box, type, message) {
+      box.className = `notice ${type}`;
+      box.textContent = message;
+    }
+
+    function clearNotice(box) {
+      box.className = "notice";
+      box.textContent = "";
+    }
+
+    function resetAuthViews() {
+      authChooser.hidden = false;
+      tokenFlow.hidden = true;
+      registerFlow.hidden = true;
+      loginFlow.hidden = true;
+      clearNotice(authMessage);
+    }
+
+    function updateCredentialMode() {
+      const mode = document.querySelector('input[name="mode"]:checked').value;
+      const customMode = mode === "custom";
+      customCredentials.hidden = !customMode;
+      registerUsername.required = customMode;
+      registerPassword.required = customMode;
+    }
+
+    function setStudent(student) {
+      state.student = student;
+
+      if (student) {
+        studentCard.hidden = false;
+        studentWelcome.textContent = `Welcome, ${student.username}`;
+        studentMeta.textContent = `Token: ${student.token} | Account created: ${new Date(student.createdAt).toLocaleString()}`;
+        complaintForm.hidden = false;
+        complaintIntro.textContent = "Your complaint form is ready. You can submit a new complaint now.";
+        authIntro.textContent = "Your student account is active. You can log out whenever you need.";
+        resetAuthViews();
+      } else {
+        studentCard.hidden = true;
+        complaintForm.hidden = true;
+        complaintIntro.textContent = "Login or complete token registration first to open the complaint form.";
+        authIntro.textContent = "Choose one option to continue into the student portal.";
+        resetAuthViews();
+      }
+    }
+
+    async function checkSession() {
+      const response = await fetch("/api/student/session");
+      const result = await response.json();
+      setStudent(result.authenticated ? result.student : null);
+    }
+
+    document.getElementById("showTokenFlow").addEventListener("click", () => {
+      authChooser.hidden = true;
+      tokenFlow.hidden = false;
+      loginFlow.hidden = true;
+      registerFlow.hidden = true;
+      clearNotice(authMessage);
+    });
+
+    document.getElementById("showLoginFlow").addEventListener("click", () => {
+      authChooser.hidden = true;
+      loginFlow.hidden = false;
+      tokenFlow.hidden = true;
+      registerFlow.hidden = true;
+      clearNotice(authMessage);
+    });
+
+    document.getElementById("backFromToken").addEventListener("click", resetAuthViews);
+    document.getElementById("backFromLogin").addEventListener("click", resetAuthViews);
+    document.getElementById("backToToken").addEventListener("click", () => {
+      registerFlow.hidden = true;
+      tokenFlow.hidden = false;
+      clearNotice(authMessage);
+    });
+
+    document.querySelectorAll('input[name="mode"]').forEach((input) => {
+      input.addEventListener("change", updateCredentialMode);
+    });
+
+    document.getElementById("tokenForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearNotice(authMessage);
+
+      const token = document.getElementById("tokenInput").value.trim();
+      const response = await fetch("/api/student/token/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        showNotice(authMessage, "error", result.error || "Failed to verify token.");
+        return;
+      }
+
+      state.verifiedToken = result.token;
+      verifiedTokenBox.style.display = "block";
+      verifiedTokenBox.innerHTML = `<strong>Verified token:</strong> ${result.token}<br><small>This token can now be used to create one student account.</small>`;
+      generatedCredentialsBox.style.display = "none";
+      generatedCredentialsBox.innerHTML = "";
+      tokenFlow.hidden = true;
+      registerFlow.hidden = false;
+      updateCredentialMode();
+      showNotice(authMessage, "success", "Token verified. Create your student login now.");
+    });
+
+    document.getElementById("registerForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearNotice(authMessage);
+      generatedCredentialsBox.style.display = "none";
+      generatedCredentialsBox.innerHTML = "";
+
+      const mode = document.querySelector('input[name="mode"]:checked').value;
+      const payload = {
+        token: state.verifiedToken,
+        mode,
+        username: registerUsername.value.trim(),
+        password: registerPassword.value.trim(),
+      };
+
+      const response = await fetch("/api/student/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        showNotice(authMessage, "error", result.error || "Failed to create student account.");
+        return;
+      }
+
+      if (result.generatedCredentials) {
+        generatedCredentialsBox.style.display = "block";
+        generatedCredentialsBox.innerHTML = `
+          <strong>System-generated credentials</strong><br>
+          Username: <strong>${result.credentials.username}</strong><br>
+          Password: <strong>${result.credentials.password}</strong>
+        `;
+      }
+
+      document.getElementById("registerForm").reset();
+      updateCredentialMode();
+      showNotice(authMessage, "success", "Student account created successfully. Complaint form is now unlocked.");
+      setStudent(result.student);
+    });
+
+    document.getElementById("loginForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearNotice(authMessage);
+
+      const payload = {
+        username: document.getElementById("loginUsername").value.trim(),
+        password: document.getElementById("loginPassword").value.trim(),
+      };
+
+      const response = await fetch("/api/student/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        showNotice(authMessage, "error", result.error || "Login failed.");
+        return;
+      }
+
+      document.getElementById("loginForm").reset();
+      showNotice(authMessage, "success", "Login successful. Complaint form is ready.");
+      setStudent(result.student);
+    });
+
+    complaintForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      clearNotice(complaintMessage);
+
+      const formData = new URLSearchParams(new FormData(complaintForm));
+      const response = await fetch("/register-complaint", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: formData,
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        showNotice(complaintMessage, "error", result.error || "Failed to submit complaint.");
+        if (response.status === 401) {
+          setStudent(null);
+        }
+        return;
+      }
+
+      complaintForm.reset();
+      showNotice(complaintMessage, "success", `Complaint submitted successfully. Your complaint ID is ${result.id}.`);
+    });
+
+    document.getElementById("logoutButton").addEventListener("click", async () => {
+      await fetch("/api/student/logout", { method: "POST" });
+      state.verifiedToken = "";
+      document.getElementById("tokenForm").reset();
+      document.getElementById("registerForm").reset();
+      document.getElementById("loginForm").reset();
+      generatedCredentialsBox.style.display = "none";
+      verifiedTokenBox.style.display = "none";
+      clearNotice(complaintMessage);
+      showNotice(authMessage, "success", "Logged out successfully.");
+      setStudent(null);
+      updateCredentialMode();
+    });
+
+    updateCredentialMode();
+    checkSession();
+  </script>
+</body>
+</html>

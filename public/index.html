@@ -1,19 +1,152 @@
-<h2>Register Complaint</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complaint Portal</title>
+  <style>
+    :root {
+      --bg: #f4efe6;
+      --panel: rgba(255, 255, 255, 0.86);
+      --text: #1f2a37;
+      --muted: #5d6b79;
+      --student: #0e7490;
+      --admin: #b45309;
+      --shadow: 0 24px 60px rgba(31, 42, 55, 0.14);
+      --border: rgba(31, 42, 55, 0.08);
+    }
 
-<form action="/register" method="POST" enctype="multipart/form-data">
-<input name="title" placeholder="Title" required><br><br>
+    * { box-sizing: border-box; }
 
-<select name="category">
-<option value="academics">Academics</option>
-<option value="lab">Lab</option>
-</select><br><br>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(14, 116, 144, 0.16), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(180, 83, 9, 0.18), transparent 30%),
+        linear-gradient(135deg, #f6f0e8 0%, #f5f8fb 100%);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
 
-<textarea name="description" placeholder="Description"></textarea><br><br>
+    .shell {
+      width: min(960px, 100%);
+      background: var(--panel);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 40px;
+    }
 
-<input type="file" name="file"><br><br>
+    .eyebrow {
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
 
-<button>Submit</button>
-</form>
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.8rem);
+      line-height: 1.05;
+    }
 
-<br>
-<a href="/track.html">Track Complaint</a>
+    p {
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.7;
+      max-width: 620px;
+    }
+
+    .grid {
+      margin-top: 36px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      border-radius: 24px;
+      padding: 28px;
+      text-decoration: none;
+      color: inherit;
+      background: white;
+      border: 1px solid var(--border);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 16px 35px rgba(31, 42, 55, 0.08);
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 22px 40px rgba(31, 42, 55, 0.12);
+    }
+
+    .card h2 {
+      margin: 14px 0 10px;
+      font-size: 1.7rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    .student .badge { background: var(--student); }
+    .admin .badge { background: var(--admin); }
+
+    .student { border-top: 6px solid var(--student); }
+    .admin { border-top: 6px solid var(--admin); }
+
+    .cta {
+      margin-top: 18px;
+      display: inline-block;
+      font-weight: 700;
+    }
+
+    @media (max-width: 720px) {
+      .shell { padding: 28px 22px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="eyebrow">College Complaint Management</div>
+    <h1>Choose how you want to enter the portal.</h1>
+    <p>
+      Students can enter a pre-generated token for first-time access or log in with their saved
+      student credentials to submit complaints again later. Admins can sign in, review complaints,
+      and generate student tokens in bulk.
+    </p>
+
+    <section class="grid">
+      <a class="card student" href="/student.html">
+        <span class="badge">S</span>
+        <h2>Student</h2>
+        <p>Enter token for first-time registration, or login to open the complaint form directly.</p>
+        <span class="cta">Continue as Student</span>
+      </a>
+
+      <a class="card admin" href="/admin/login.html">
+        <span class="badge">A</span>
+        <h2>Admin</h2>
+        <p>Sign in to review complaints, resolve them, and bulk-generate student access tokens.</p>
+        <span class="cta">Continue as Admin</span>
+      </a>
+    </section>
+  </main>
+</body>
+</html>
