@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Complaint Registered</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f4f4f4;
+padding:40px;
+}
+
+.container{
+width:400px;
+margin:auto;
+background:white;
+padding:30px;
+border-radius:8px;
+box-shadow:0 0 10px rgba(0,0,0,0.2);
+text-align:center;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Complaint Registered Successfully</h2>
+
+<p><b>Complaint ID:</b> <span id="cid"></span></p>
+<p><b>Title:</b> <span id="title"></span></p>
+<p><b>Status:</b> <span id="status"></span></p>
+
+<br>
+<a href="/">Register Another Complaint</a>
+
+</div>
+
+<script>
+
+const params = new URLSearchParams(window.location.search);
+
+document.getElementById("cid").textContent = params.get("id");
+document.getElementById("title").textContent = params.get("title");
+document.getElementById("status").textContent = params.get("status");
+
+</script>
+
+</body>
+</html>

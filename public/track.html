@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<<<<<<< HEAD
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -545,3 +546,127 @@
   </script>
 </body>
 </html>
+=======
+<html>
+<head>
+<title>Track Complaint</title>
+
+<style>
+
+body{
+font-family: Arial, Helvetica, sans-serif;
+background:#f4f6f8;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.container{
+background:white;
+padding:40px;
+width:500px;
+border-radius:10px;
+box-shadow:0 0 15px rgba(0,0,0,0.1);
+}
+
+h2{
+margin-bottom:20px;
+}
+
+input{
+width:100%;
+padding:12px;
+border:1px solid #ccc;
+border-radius:5px;
+margin-bottom:15px;
+}
+
+button{
+width:100%;
+padding:12px;
+background:#27ae60;
+color:white;
+border:none;
+border-radius:5px;
+font-size:16px;
+cursor:pointer;
+}
+
+button:hover{
+background:#219150;
+}
+
+.result{
+margin-top:25px;
+background:#dfe6ee;
+padding:20px;
+border-radius:8px;
+line-height:28px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Track Your Complaint</h2>
+
+<input type="text" id="complaintId" placeholder="Enter Complaint ID">
+
+<button onclick="trackComplaint()">Check Status</button>
+
+<div id="result"></div>
+
+</div>
+
+<script>
+
+function trackComplaint(){
+
+const id = document.getElementById("complaintId").value;
+
+fetch("/track/" + id)
+
+.then(res => res.json())
+
+.then(data => {
+
+if(data.error){
+
+document.getElementById("result").innerHTML =
+"<p style='color:red;'>Complaint not found</p>";
+
+}
+else{
+
+document.getElementById("result").innerHTML = `
+<div class="result">
+
+<p><b>Complaint ID:</b> ${data.id}</p>
+
+<p><b>Title:</b> ${data.title}</p>
+
+<p><b>Status:</b> ${data.status}</p>
+
+<p><b>Action Taken:</b> ${data.action_taken}</p>
+
+<p><b>Action Date:</b> ${data.action_date}</p>
+
+</div>
+`;
+
+}
+
+});
+
+}
+
+</script>
+
+</body>
+</html>
+>>>>>>> c6b034192a88a2c9d86d8be88c7a839de334fde0
