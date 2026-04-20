@@ -447,7 +447,6 @@
               <h3>${item.title || "-"}</h3>
               <div class="meta">
                 Complaint ID: ${item.id}<br>
-                Student: ${item.studentUsername || "-"}<br>
                 Department: ${item.category || "-"}<br>
                 Created: ${formatDate(item.created_at)}
               </div>
@@ -459,6 +458,10 @@
             <div class="detail-box">
               <small>Student Description</small>
               <div>${item.description || "-"}</div>
+            </div>
+            <div class="detail-box">
+              <small>Proof Attachment</small>
+              <div>${item.file ? `<a href="${encodeURI(item.file)}" target="_blank" rel="noopener noreferrer">Open proof file</a>` : "No proof uploaded."}</div>
             </div>
             <div class="detail-box">
               <small>Admin Action Taken</small>
@@ -498,7 +501,6 @@
           <h3>${item.title || "-"}</h3>
           <div class="feedback-meta">
             Complaint ID: ${item.id}<br>
-            Student: ${item.studentUsername || "-"}<br>
             Department: ${item.category || "-"}<br>
             Status: ${item.status || "-"}
           </div>

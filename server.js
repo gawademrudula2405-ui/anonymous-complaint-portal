@@ -1,16 +1,20 @@
 const express = require("express");
-const fs = require("fs");
 const session = require("express-session");
 const { v4: uuidv4 } = require("uuid");
 const path = require("path");
+const fs = require("fs");
+const multer = require("multer");
+const { getPool, initDatabase } = require("./db");
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 const publicDir = path.join(__dirname, "public");
-const complaintsFile = path.join(__dirname, "complaints.json");
-const studentsFile = path.join(__dirname, "students.json");
-const tokensFile = path.join(__dirname, "student-tokens.json");
+const uploadsDir = path.join(__dirname, "uploads");
+
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 const adminAccounts = {
   academics: { username: "academics", password: "1234", name: "Dr. Sharma", department: "Academics", role: "Academic Admin" },
@@ -37,46 +41,41 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(publicDir, "index.html"));
 });
 
+app.use("/uploads", express.static(uploadsDir));
 app.use(express.static(publicDir));
 
-function ensureJsonFile(filePath, defaultValue) {
-  if (!fs.existsSync(filePath)) {
-    fs.writeFileSync(filePath, JSON.stringify(defaultValue, null, 2), "utf8");
-  }
-}
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (_req, file, cb) => {
+    const extension = path.extname(file.originalname || "").toLowerCase();
+    cb(null, `${Date.now()}-${uuidv4().slice(0, 8)}${extension}`);
+  },
+});
 
-function readJson(filePath, defaultValue) {
-  ensureJsonFile(filePath, defaultValue);
-  return JSON.parse(fs.readFileSync(filePath, "utf8"));
-}
+const allowedMimeTypes = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
+]);
 
-function writeJson(filePath, value) {
-  fs.writeFileSync(filePath, JSON.stringify(value, null, 2), "utf8");
-}
+const uploadProof = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (!file || allowedMimeTypes.has(file.mimetype)) {
+      return cb(null, true);
+    }
 
-function readComplaints() {
-  return readJson(complaintsFile, []);
-}
-
-function writeComplaints(complaints) {
-  writeJson(complaintsFile, complaints);
-}
-
-function readStudents() {
-  return readJson(studentsFile, []);
-}
-
-function writeStudents(students) {
-  writeJson(studentsFile, students);
-}
-
-function readTokens() {
-  return readJson(tokensFile, []);
-}
-
-function writeTokens(tokens) {
-  writeJson(tokensFile, tokens);
-}
+    cb(new Error("Only images, PDF, DOC, DOCX, and TXT proof files are allowed."));
+  },
+});
 
 function normalizeToken(token) {
   return String(token || "").trim().toUpperCase();
@@ -87,12 +86,12 @@ function getHistoryCutoff(range) {
 
   if (range === "week") {
     now.setDate(now.getDate() - 7);
-    return now.toISOString();
+    return now;
   }
 
   if (range === "month") {
     now.setMonth(now.getMonth() - 1);
-    return now.toISOString();
+    return now;
   }
 
   return null;
@@ -102,23 +101,94 @@ function generateRandomValue(prefix, length) {
   return `${prefix}${uuidv4().replace(/-/g, "").slice(0, length).toUpperCase()}`;
 }
 
-function findCurrentStudent(req) {
+function formatDate(value) {
+  if (!value) {
+    return null;
+  }
+
+  return new Date(value).toISOString();
+}
+
+function mapStudent(row) {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    username: row.username,
+    password: row.password,
+    token: row.token,
+    createdAt: formatDate(row.created_at),
+  };
+}
+
+function mapToken(row) {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    token: row.token,
+    createdAt: formatDate(row.created_at),
+    createdBy: row.created_by,
+    usedByStudentId: row.used_by_student_id,
+    usedByUsername: row.used_by_username,
+    usedAt: formatDate(row.used_at),
+  };
+}
+
+function mapComplaint(row) {
+  if (!row) {
+    return null;
+  }
+
+  const hasFeedback = row.feedback_mood || row.feedback_message || row.feedback_submitted_at;
+
+  return {
+    id: row.id,
+    title: row.title,
+    category: row.category,
+    description: row.description,
+    file: row.file_path,
+    status: row.status,
+    action: row.action_text,
+    action_date: formatDate(row.action_date),
+    created_at: formatDate(row.created_at),
+    feedback: hasFeedback
+      ? {
+          mood: row.feedback_mood || "unknown",
+          message: row.feedback_message || "",
+          submitted_at: formatDate(row.feedback_submitted_at),
+        }
+      : null,
+    studentId: row.student_id,
+    studentUsername: row.student_username,
+  };
+}
+
+async function findCurrentStudent(req) {
   if (!req.session.studentId) {
     return null;
   }
 
-  return readStudents().find((student) => student.id === req.session.studentId) || null;
+  const [rows] = await getPool().query("SELECT * FROM students WHERE id = ? LIMIT 1", [req.session.studentId]);
+  return mapStudent(rows[0]);
 }
 
-function requireStudent(req, res, next) {
-  const student = findCurrentStudent(req);
+async function requireStudent(req, res, next) {
+  try {
+    const student = await findCurrentStudent(req);
 
-  if (!student) {
-    return res.status(401).json({ error: "Student login required." });
+    if (!student) {
+      return res.status(401).json({ error: "Student login required." });
+    }
+
+    req.student = student;
+    next();
+  } catch (error) {
+    next(error);
   }
-
-  req.student = student;
-  next();
 }
 
 function requireAdmin(req, res, next) {
@@ -155,8 +225,8 @@ function sanitizeAdmin(admin) {
   };
 }
 
-app.get("/api/student/session", (req, res) => {
-  const student = findCurrentStudent(req);
+app.get("/api/student/session", async (req, res) => {
+  const student = await findCurrentStudent(req);
 
   if (!student) {
     return res.json({ authenticated: false });
@@ -168,9 +238,10 @@ app.get("/api/student/session", (req, res) => {
   });
 });
 
-app.post("/api/student/token/validate", (req, res) => {
+app.post("/api/student/token/validate", async (req, res) => {
   const tokenValue = normalizeToken(req.body.token);
-  const token = readTokens().find((item) => item.token === tokenValue);
+  const [rows] = await getPool().query("SELECT * FROM tokens WHERE token = ? LIMIT 1", [tokenValue]);
+  const token = mapToken(rows[0]);
 
   if (!token) {
     return res.status(404).json({ error: "Token not found." });
@@ -187,12 +258,12 @@ app.post("/api/student/token/validate", (req, res) => {
   });
 });
 
-app.post("/api/student/register", (req, res) => {
+app.post("/api/student/register", async (req, res) => {
   const tokenValue = normalizeToken(req.body.token);
   const mode = req.body.mode === "system" ? "system" : "custom";
-  const students = readStudents();
-  const tokens = readTokens();
-  const token = tokens.find((item) => item.token === tokenValue);
+  const pool = getPool();
+  const [tokenRows] = await pool.query("SELECT * FROM tokens WHERE token = ? LIMIT 1", [tokenValue]);
+  const token = mapToken(tokenRows[0]);
 
   if (!token) {
     return res.status(404).json({ error: "Token not found." });
@@ -206,9 +277,12 @@ app.post("/api/student/register", (req, res) => {
   let password = String(req.body.password || "").trim();
 
   if (mode === "system") {
+    let matchingRows = [];
+
     do {
       username = `student${Math.floor(1000 + Math.random() * 9000)}`;
-    } while (students.some((student) => student.username.toLowerCase() === username.toLowerCase()));
+      [matchingRows] = await pool.query("SELECT id FROM students WHERE LOWER(username) = LOWER(?) LIMIT 1", [username]);
+    } while (matchingRows.length > 0);
 
     password = generateRandomValue("PW", 8);
   } else {
@@ -216,7 +290,9 @@ app.post("/api/student/register", (req, res) => {
       return res.status(400).json({ error: "Username and password are required." });
     }
 
-    if (students.some((student) => student.username.toLowerCase() === username.toLowerCase())) {
+    const [matchingRows] = await pool.query("SELECT id FROM students WHERE LOWER(username) = LOWER(?) LIMIT 1", [username]);
+
+    if (matchingRows.length > 0) {
       return res.status(400).json({ error: "Username already exists. Please choose another one." });
     }
   }
@@ -229,13 +305,17 @@ app.post("/api/student/register", (req, res) => {
     createdAt: new Date().toISOString(),
   };
 
-  students.push(student);
-  token.usedByStudentId = student.id;
-  token.usedByUsername = student.username;
-  token.usedAt = new Date().toISOString();
+  const studentCreatedAt = new Date(student.createdAt);
+  const usedAt = new Date();
 
-  writeStudents(students);
-  writeTokens(tokens);
+  await pool.query(
+    "INSERT INTO students (id, username, password, token, created_at) VALUES (?, ?, ?, ?, ?)",
+    [student.id, student.username, student.password, student.token, studentCreatedAt]
+  );
+  await pool.query(
+    "UPDATE tokens SET used_by_student_id = ?, used_by_username = ?, used_at = ? WHERE token = ?",
+    [student.id, student.username, usedAt, token.token]
+  );
 
   req.session.studentId = student.id;
 
@@ -250,12 +330,14 @@ app.post("/api/student/register", (req, res) => {
   });
 });
 
-app.post("/api/student/login", (req, res) => {
+app.post("/api/student/login", async (req, res) => {
   const username = String(req.body.username || "").trim();
   const password = String(req.body.password || "").trim();
-  const student = readStudents().find(
-    (item) => item.username.toLowerCase() === username.toLowerCase() && item.password === password
+  const [rows] = await getPool().query(
+    "SELECT * FROM students WHERE LOWER(username) = LOWER(?) AND password = ? LIMIT 1",
+    [username, password]
   );
+  const student = mapStudent(rows[0]);
 
   if (!student) {
     return res.status(401).json({ error: "Invalid username or password." });
@@ -309,17 +391,18 @@ app.post("/api/admin/logout", (req, res) => {
   res.json({ message: "Logged out successfully." });
 });
 
-app.post("/api/admin/tokens/generate", requireAdmin, (req, res) => {
+app.post("/api/admin/tokens/generate", requireAdmin, async (req, res) => {
   const count = Math.min(Math.max(Number(req.body.count) || 0, 1), 500);
   const prefix = String(req.body.prefix || "STU").trim().toUpperCase().replace(/[^A-Z0-9-]/g, "") || "STU";
-  const tokens = readTokens();
-  const createdAt = new Date().toISOString();
+  const pool = getPool();
+  const createdAt = new Date();
   const generated = [];
 
   while (generated.length < count) {
     const tokenValue = `${prefix}-${uuidv4().replace(/-/g, "").slice(0, 8).toUpperCase()}`;
+    const [existingRows] = await pool.query("SELECT token FROM tokens WHERE token = ? LIMIT 1", [tokenValue]);
 
-    if (tokens.some((item) => item.token === tokenValue) || generated.some((item) => item.token === tokenValue)) {
+    if (existingRows.length > 0 || generated.some((item) => item.token === tokenValue)) {
       continue;
     }
 
@@ -333,8 +416,15 @@ app.post("/api/admin/tokens/generate", requireAdmin, (req, res) => {
     });
   }
 
-  tokens.unshift(...generated);
-  writeTokens(tokens);
+  for (const token of generated) {
+    await pool.query(
+      `
+        INSERT INTO tokens (token, created_at, created_by, used_by_student_id, used_by_username, used_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `,
+      [token.token, token.createdAt, token.createdBy, null, null, null]
+    );
+  }
 
   res.json({
     message: `${generated.length} token(s) created successfully.`,
@@ -342,42 +432,53 @@ app.post("/api/admin/tokens/generate", requireAdmin, (req, res) => {
   });
 });
 
-app.get("/api/admin/tokens", requireAdmin, (req, res) => {
-  const tokens = readTokens().sort((left, right) => new Date(right.createdAt) - new Date(left.createdAt));
-  res.json(tokens);
+app.get("/api/admin/tokens", requireAdmin, async (req, res) => {
+  const [rows] = await getPool().query("SELECT * FROM tokens ORDER BY created_at DESC");
+  res.json(rows.map(mapToken));
 });
 
-app.post("/register-complaint", requireStudent, (req, res) => {
+app.post("/register-complaint", requireStudent, uploadProof.single("proof"), async (req, res) => {
   const id = "CMP-" + uuidv4().slice(0, 6).toUpperCase();
   const title = String(req.body.title || "").trim();
   const description = String(req.body.description || "").trim();
   const category = String(req.body.category || "").trim();
-  const createdAt = new Date().toISOString();
+  const filePath = req.file ? `/uploads/${req.file.filename}` : null;
+  const createdAt = new Date();
 
   if (!title || !description || !category) {
     return res.status(400).json({ error: "Title, department, and description are required." });
   }
 
   try {
-    const complaints = readComplaints();
-    complaints.push({
-      id,
-      title,
-      category,
-      description,
-      file: null,
-      status: "Pending",
-      action: "Created",
-      action_date: createdAt,
-      created_at: createdAt,
-      feedback: null,
-      studentId: req.student.id,
-      studentUsername: req.student.username,
-    });
-    writeComplaints(complaints);
+    await getPool().query(
+      `
+        INSERT INTO complaints (
+          id, title, category, description, file_path, status, action_text, action_date, created_at,
+          feedback_mood, feedback_message, feedback_submitted_at, student_id, student_username
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        id,
+        title,
+        category,
+        description,
+        filePath,
+        "Pending",
+        "Created",
+        createdAt,
+        createdAt,
+        null,
+        null,
+        null,
+        req.student.id,
+        req.student.username,
+      ]
+    );
 
     res.json({
       id,
+      file: filePath,
       message: "Complaint submitted successfully.",
     });
   } catch (err) {
@@ -386,62 +487,77 @@ app.post("/register-complaint", requireStudent, (req, res) => {
   }
 });
 
-app.get("/track", (req, res) => {
-  const id = req.query.id;
+app.get("/track", async (req, res) => {
+  const id = String(req.query.id || "").trim();
 
+  if (!id) {
+    return res.redirect("/track.html");
+  }
+
+  res.redirect(`/track.html?id=${encodeURIComponent(id)}`);
+});
+
+app.get("/api/track/:id", async (req, res) => {
   try {
-    const row = readComplaints().find((complaint) => complaint.id === id);
+    const [rows] = await getPool().query("SELECT * FROM complaints WHERE id = ? LIMIT 1", [req.params.id]);
+    const row = mapComplaint(rows[0]);
 
     if (!row) {
-      return res.send("<h3>Complaint not found</h3><a href='/track.html'>Back</a>");
+      return res.status(404).json({ error: "Complaint not found." });
     }
 
-    res.send(`
-      <h2>Complaint Status</h2>
-      <p><b>ID:</b> ${row.id}</p>
-      <p><b>Title:</b> ${row.title}</p>
-      <p><b>Department:</b> ${row.category}</p>
-      <p><b>Student Username:</b> ${row.studentUsername || "-"}</p>
-      <p><b>Description:</b> ${row.description || "-"}</p>
-      <p><b>Status:</b> ${row.status}</p>
-      <p><b>Created At:</b> ${row.created_at || "-"}</p>
-      <a href="/track.html">Back</a>
-    `);
+    res.json({
+      id: row.id,
+      title: row.title,
+      category: row.category,
+      description: row.description,
+      file: row.file,
+      status: row.status,
+      action: row.action,
+      action_date: row.action_date,
+      created_at: row.created_at,
+      feedback: row.feedback,
+    });
   } catch (err) {
     console.error("Failed to track complaint", err);
-    res.status(500).send("<h3>Something went wrong.</h3>");
+    res.status(500).json({ error: "Failed to load complaint status." });
   }
 });
 
-app.get("/api/complaints", requireAdmin, (req, res) => {
+app.get("/api/complaints", requireAdmin, async (req, res) => {
   const { history, department } = req.query;
   const cutoff = getHistoryCutoff(history);
 
   try {
-    const rows = readComplaints()
-      .filter((complaint) => {
-        const requestedDepartment =
-          req.admin.department && req.admin.department !== "All Departments" ? req.admin.department : department;
+    const requestedDepartment =
+      req.admin.department && req.admin.department !== "All Departments" ? req.admin.department : department;
+    const filters = [];
+    const values = [];
 
-        if (!requestedDepartment || requestedDepartment === "All Departments") {
-          return true;
-        }
+    if (requestedDepartment && requestedDepartment !== "All Departments") {
+      filters.push("category = ?");
+      values.push(requestedDepartment);
+    }
 
-        return complaint.category === requestedDepartment;
-      })
-      .filter((complaint) => !cutoff || complaint.created_at >= cutoff)
-      .sort((left, right) => new Date(right.created_at) - new Date(left.created_at));
+    if (cutoff) {
+      filters.push("created_at >= ?");
+      values.push(cutoff);
+    }
 
-    res.json(rows);
+    const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
+    const [rows] = await getPool().query(`SELECT * FROM complaints ${whereClause} ORDER BY created_at DESC`, values);
+
+    res.json(rows.map(mapComplaint));
   } catch (err) {
     console.error("Failed to fetch complaints", err);
     res.status(500).json({ error: "Failed to load complaints." });
   }
 });
 
-app.get("/api/complaints/:id", requireAdmin, (req, res) => {
+app.get("/api/complaints/:id", requireAdmin, async (req, res) => {
   try {
-    const row = readComplaints().find((complaint) => complaint.id === req.params.id);
+    const [rows] = await getPool().query("SELECT * FROM complaints WHERE id = ? LIMIT 1", [req.params.id]);
+    const row = mapComplaint(rows[0]);
 
     if (!row) {
       return res.status(404).json({ error: "Complaint not found." });
@@ -454,22 +570,21 @@ app.get("/api/complaints/:id", requireAdmin, (req, res) => {
   }
 });
 
-app.post("/resolve/:id", requireAdmin, (req, res) => {
-  const actionDate = new Date().toISOString();
+app.post("/resolve/:id", requireAdmin, async (req, res) => {
+  const actionDate = new Date();
   const actionText = String(req.body.action || "").trim();
 
   try {
-    const complaints = readComplaints();
-    const complaint = complaints.find((item) => item.id === req.params.id);
+    const [rows] = await getPool().query("SELECT id FROM complaints WHERE id = ? LIMIT 1", [req.params.id]);
 
-    if (!complaint) {
+    if (rows.length === 0) {
       return res.status(404).json({ error: "Complaint not found." });
     }
 
-    complaint.status = "Resolved";
-    complaint.action = actionText || "Resolved";
-    complaint.action_date = actionDate;
-    writeComplaints(complaints);
+    await getPool().query(
+      "UPDATE complaints SET status = ?, action_text = ?, action_date = ? WHERE id = ?",
+      ["Resolved", actionText || "Resolved", actionDate, req.params.id]
+    );
 
     res.json({ message: "Complaint updated successfully." });
   } catch (err) {
@@ -478,24 +593,33 @@ app.post("/resolve/:id", requireAdmin, (req, res) => {
   }
 });
 
-app.post("/feedback/:id", (req, res) => {
+app.post("/feedback/:id", async (req, res) => {
   const { mood, message } = req.body;
 
   try {
-    const complaints = readComplaints();
-    const complaint = complaints.find((item) => item.id === req.params.id);
+    const [rows] = await getPool().query("SELECT id, status, feedback_submitted_at FROM complaints WHERE id = ? LIMIT 1", [req.params.id]);
 
-    if (!complaint) {
+    if (rows.length === 0) {
       return res.status(404).json({ error: "Complaint not found." });
     }
 
-    complaint.feedback = {
-      mood: mood || "unknown",
-      message: message || "",
-      submitted_at: new Date().toISOString(),
-    };
+    if (rows[0].status !== "Resolved") {
+      return res.status(400).json({ error: "Feedback can be shared after the complaint is resolved." });
+    }
 
-    writeComplaints(complaints);
+    if (rows[0].feedback_submitted_at) {
+      return res.status(400).json({ error: "Feedback has already been submitted for this complaint." });
+    }
+
+    await getPool().query(
+      `
+        UPDATE complaints
+        SET feedback_mood = ?, feedback_message = ?, feedback_submitted_at = ?
+        WHERE id = ?
+      `,
+      [mood || "unknown", message || "", new Date(), req.params.id]
+    );
+
     res.json({ message: "Feedback saved successfully." });
   } catch (err) {
     console.error("Failed to save feedback", err);
@@ -503,6 +627,35 @@ app.post("/feedback/:id", (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+app.use((error, req, res, next) => {
+  if (error instanceof multer.MulterError) {
+    if (error.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ error: "Proof file is too large. Maximum size is 5 MB." });
+    }
+
+    return res.status(400).json({ error: error.message || "Failed to upload proof file." });
+  }
+
+  if (error && error.message && error.message.includes("proof files")) {
+    return res.status(400).json({ error: error.message });
+  }
+
+  console.error("Unexpected server error", error);
+
+  if (res.headersSent) {
+    return next(error);
+  }
+
+  res.status(500).json({ error: "Internal server error." });
 });
+
+initDatabase()
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`Server running on http://localhost:${port}`);
+    });
+  })
+  .catch((error) => {
+    console.error("Failed to initialize MySQL database.", error);
+    process.exit(1);
+  });

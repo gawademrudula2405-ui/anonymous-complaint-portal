@@ -6,14 +6,18 @@
   <title>Track Complaint</title>
   <style>
     :root {
-      --text: #1f2937;
-      --muted: #66758a;
-      --accent: #1d4ed8;
-      --accent-soft: #dbeafe;
-      --panel: #ffffff;
-      --border: rgba(31, 41, 55, 0.1);
-      --happy: #166534;
-      --pending: #92400e;
+      --text: #193247;
+      --muted: #667785;
+      --border: rgba(125, 153, 170, 0.28);
+      --panel: rgba(255, 255, 255, 0.96);
+      --primary: #1f8a83;
+      --secondary: #bff3ec;
+      --shadow: 0 22px 50px rgba(32, 77, 101, 0.12);
+      --danger: #b91c1c;
+      --success: #166534;
+      --warning: #c2410c;
+      --warning-soft: #fff7ed;
+      --success-soft: #ecfdf5;
     }
 
     * { box-sizing: border-box; }
@@ -24,293 +28,520 @@
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       color: var(--text);
       background:
-        radial-gradient(circle at top left, rgba(29, 78, 216, 0.14), transparent 25%),
-        linear-gradient(145deg, #eff6ff 0%, #f8fafc 100%);
+        radial-gradient(circle at top left, rgba(34, 197, 94, 0.08), transparent 26%),
+        radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.1), transparent 25%),
+        linear-gradient(145deg, #f0fdfa 0%, #eff6ff 100%);
       padding: 24px;
-      display: grid;
-      place-items: center;
     }
 
-    .shell {
-      width: min(860px, 100%);
-      background: rgba(255, 255, 255, 0.96);
+    .layout {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(320px, 400px) 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
       border-radius: 28px;
       padding: 34px;
-      box-shadow: 0 24px 60px rgba(31, 41, 55, 0.12);
+      box-shadow: var(--shadow);
     }
 
-    h1 {
-      margin: 0 0 10px;
-      font-size: clamp(2rem, 4vw, 3.2rem);
+    h1, h2, h3 {
+      margin: 0;
     }
 
-    p {
+    h1, h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+    }
+
+    .subtext {
       color: var(--muted);
       line-height: 1.7;
+      margin: 18px 0 26px;
     }
 
-    form {
+    .stack {
+      display: grid;
+      gap: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      font-weight: 700;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid #cfe1e4;
+      border-radius: 16px;
+      padding: 14px 16px;
+      font: inherit;
+      background: white;
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 18px;
+      padding: 16px 20px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px rgba(16, 24, 40, 0.12);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: var(--secondary);
+      color: #11635d;
+    }
+
+    .btn-link {
+      border: 1px solid var(--border);
+      background: white;
+      color: var(--text);
+    }
+
+    .inline-actions {
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
-      margin: 24px 0;
     }
 
-    input, button, textarea {
-      font: inherit;
-      border-radius: 16px;
-      padding: 14px 16px;
-    }
-
-    input, textarea {
-      border: 1px solid var(--border);
-    }
-
-    input {
-      flex: 1 1 280px;
-    }
-
-    button {
-      border: 0;
-      background: var(--accent);
-      color: white;
+    .status-box {
+      min-height: 28px;
+      margin-top: 14px;
       font-weight: 700;
-      cursor: pointer;
     }
 
-    .result {
-      display: none;
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      padding: 22px;
-      background: var(--panel);
-    }
+    .success { color: var(--success); }
+    .error { color: var(--danger); }
 
-    .notice {
-      border-radius: 18px;
-      padding: 16px 18px;
-      font-weight: 700;
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 800;
       margin-bottom: 18px;
     }
 
-    .notice.pending {
-      background: #fff7ed;
-      color: var(--pending);
+    .status-pill.pending {
+      background: var(--warning-soft);
+      color: var(--warning);
     }
 
-    .notice.resolved {
-      background: #ecfdf5;
-      color: var(--happy);
+    .status-pill.resolved {
+      background: var(--success-soft);
+      color: var(--success);
     }
 
-    .row {
-      display: grid;
-      grid-template-columns: 170px 1fr;
-      gap: 10px;
-      padding: 10px 0;
-      border-bottom: 1px solid rgba(31, 41, 55, 0.06);
-    }
-
-    .row:last-child {
-      border-bottom: 0;
-    }
-
-    .label {
-      color: var(--muted);
-      font-weight: 700;
-    }
-
-    .feedback-box {
-      display: none;
-      margin-top: 22px;
-      padding: 18px;
-      border-radius: 20px;
+    .card-note,
+    .detail-box {
+      padding: 16px 18px;
+      border-radius: 18px;
       background: #f8fafc;
       border: 1px solid var(--border);
     }
 
-    .emoji-row {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin: 16px 0;
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
     }
 
-    .emoji-btn {
-      background: white;
-      color: var(--text);
-      border: 1px solid var(--border);
-      min-width: 150px;
-    }
-
-    .emoji-btn.active {
-      background: var(--accent-soft);
-      border-color: #93c5fd;
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 90px;
-      resize: vertical;
-      margin-bottom: 12px;
-    }
-
-    .feedback-status {
-      min-height: 24px;
+    .detail-box small,
+    .timeline-item small {
+      display: block;
+      color: var(--muted);
       font-weight: 700;
+      margin-bottom: 8px;
     }
 
-    .back {
-      display: inline-block;
+    .timeline {
+      display: grid;
+      gap: 14px;
       margin-top: 20px;
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 700;
     }
 
-    @media (max-width: 640px) {
-      .row {
-        grid-template-columns: 1fr;
-      }
+    .timeline-item {
+      padding: 18px;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: white;
+    }
+
+    .empty-state {
+      border: 1px dashed var(--border);
+      border-radius: 22px;
+      padding: 26px;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.6);
+      line-height: 1.7;
+    }
+
+    .feedback-box {
+      margin-top: 22px;
+      padding-top: 22px;
+      border-top: 1px solid var(--border);
+    }
+
+    .mood-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 8px;
+    }
+
+    .mood-option input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .mood-card {
+      height: 100%;
+      border: 1px solid #cfe1e4;
+      border-radius: 22px;
+      background: white;
+      padding: 18px 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+    }
+
+    .mood-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px rgba(16, 24, 40, 0.08);
+    }
+
+    .mood-icon {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 12px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 2.2rem;
+      background: linear-gradient(145deg, #fef3c7 0%, #fde68a 100%);
+      box-shadow: inset 0 -6px 12px rgba(255, 255, 255, 0.55);
+    }
+
+    .mood-option.okay .mood-icon {
+      background: linear-gradient(145deg, #dbeafe 0%, #bfdbfe 100%);
+    }
+
+    .mood-option.sad .mood-icon {
+      background: linear-gradient(145deg, #fee2e2 0%, #fecaca 100%);
+    }
+
+    .mood-label {
+      display: block;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .mood-caption {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .mood-option input:checked + .mood-card {
+      border-color: var(--primary);
+      background: linear-gradient(145deg, #f0fdfa 0%, #ecfeff 100%);
+      box-shadow: 0 18px 34px rgba(31, 138, 131, 0.12);
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .panel { padding: 24px; }
+      .detail-grid { grid-template-columns: 1fr; }
+      .mood-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <main class="shell">
-    <h1>Track Complaint</h1>
-    <p>Enter your complaint ID to check the latest status and see what the admin has done.</p>
+  <main class="layout">
+    <section class="panel">
+      <h1>Track Complaint</h1>
+      <p class="subtext">Check the latest complaint status, see the admin action taken, and share feedback after the issue is resolved.</p>
 
-    <form id="trackForm">
-      <input id="complaintId" name="id" placeholder="Example: CMP-CE1159" required>
-      <button type="submit">Track</button>
-    </form>
+      <form class="stack" id="trackForm">
+        <label>Complaint ID
+          <input id="complaintIdInput" name="id" placeholder="Enter complaint ID like CMP-123ABC" required>
+        </label>
+        <div class="inline-actions">
+          <button class="btn btn-primary" type="submit">Track Complaint</button>
+          <button class="btn btn-link" type="button" onclick="location.href='/student.html'">Student Panel</button>
+          <button class="btn btn-link" type="button" onclick="location.href='/'">Back to Home</button>
+        </div>
+      </form>
 
-    <section class="result" id="resultBox"></section>
-
-    <section class="feedback-box" id="feedbackBox">
-      <h3>How do you feel about the action? 😄😐😤</h3>
-      <p>Be honest. Was it a superhero move or a sleepy turtle response?</p>
-
-      <div class="emoji-row">
-        <button type="button" class="emoji-btn" data-mood="happy">😄 Happy</button>
-        <button type="button" class="emoji-btn" data-mood="okay">😐 Okay-ish</button>
-        <button type="button" class="emoji-btn" data-mood="sad">😤 Not happy</button>
-      </div>
-
-      <textarea id="feedbackMessage" placeholder="Drop your fun feedback here... for example: 'Fast fix, campus legend!'"></textarea>
-      <button type="button" id="submitFeedback">Send Feedback</button>
-      <div class="feedback-status" id="feedbackStatus"></div>
+      <div class="status-box" id="statusBox"></div>
     </section>
 
-    <a class="back" href="/student.html">Back to Student Portal</a>
+    <section class="panel">
+      <h2 id="resultTitle">Complaint Details</h2>
+      <p class="subtext" id="resultText">Search with a complaint ID to view the full status update here.</p>
+      <div id="resultBody">
+        <div class="empty-state">
+          Nothing to show yet. Enter a complaint ID on the left to load the complaint timeline and feedback section.
+        </div>
+      </div>
+    </section>
   </main>
 
   <script>
-    const form = document.getElementById("trackForm");
-    const resultBox = document.getElementById("resultBox");
-    const feedbackBox = document.getElementById("feedbackBox");
-    const feedbackStatus = document.getElementById("feedbackStatus");
-    const feedbackMessage = document.getElementById("feedbackMessage");
-    const moodButtons = Array.from(document.querySelectorAll(".emoji-btn"));
-    let selectedMood = "";
-    let currentComplaintId = "";
+    const trackForm = document.getElementById("trackForm");
+    const complaintIdInput = document.getElementById("complaintIdInput");
+    const statusBox = document.getElementById("statusBox");
+    const resultBody = document.getElementById("resultBody");
+    const resultTitle = document.getElementById("resultTitle");
+    const resultText = document.getElementById("resultText");
 
-    moodButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        selectedMood = button.dataset.mood;
-        moodButtons.forEach((item) => item.classList.remove("active"));
-        button.classList.add("active");
-      });
-    });
-
-    function formatFeedback(feedback) {
-      if (!feedback) {
-        return "No feedback sent yet.";
-      }
-
-      const moodMap = {
-        happy: "😄 Happy",
-        okay: "😐 Okay-ish",
-        sad: "😤 Not happy",
-      };
-
-      return `${moodMap[feedback.mood] || feedback.mood}${feedback.message ? ` - ${feedback.message}` : ""}`;
+    function setStatus(message, type = "") {
+      statusBox.textContent = message || "";
+      statusBox.className = `status-box ${type}`.trim();
     }
 
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
 
-      const id = document.getElementById("complaintId").value.trim();
-      const response = await fetch(`/api/complaints/${encodeURIComponent(id)}`);
-      const result = await response.json();
-
-      currentComplaintId = "";
-      resultBox.style.display = "block";
-      feedbackBox.style.display = "none";
-      feedbackStatus.textContent = "";
-      feedbackMessage.value = "";
-      selectedMood = "";
-      moodButtons.forEach((item) => item.classList.remove("active"));
-
-      if (!response.ok) {
-        resultBox.innerHTML = `<strong>${result.error || "Complaint not found."}</strong>`;
-        return;
+    function formatDate(value) {
+      if (!value) {
+        return "-";
       }
 
-      const pendingMessage = `<div class="notice pending">⏳ This complaint is not resolved yet. The admin squad is still cooking up the fix.</div>`;
-      const resolvedMessage = `<div class="notice resolved">🎉 Good news! This complaint has been resolved. Check the action taken and rate the vibes below.</div>`;
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        return value;
+      }
 
-      resultBox.innerHTML = `
-        ${result.status === "Resolved" ? resolvedMessage : pendingMessage}
-        <div class="row"><div class="label">Complaint ID</div><div>${result.id}</div></div>
-        <div class="row"><div class="label">Title</div><div>${result.title || "-"}</div></div>
-        <div class="row"><div class="label">Department</div><div>${result.category || "-"}</div></div>
-        <div class="row"><div class="label">Your Description</div><div>${result.description || "-"}</div></div>
-        <div class="row"><div class="label">Status</div><div>${result.status || "-"}</div></div>
-        <div class="row"><div class="label">Action Taken</div><div>${result.status === "Resolved" ? (result.action || "-") : "Not available until the complaint is resolved."}</div></div>
-        <div class="row"><div class="label">Created At</div><div>${result.created_at || "-"}</div></div>
-        ${result.status === "Resolved" ? `<div class="row"><div class="label">Your Feedback</div><div>${formatFeedback(result.feedback)}</div></div>` : ""}
+      return date.toLocaleString();
+    }
+
+    function renderComplaint(data) {
+      const isResolved = data.status === "Resolved";
+      const hasFeedback = Boolean(data.feedback);
+
+      resultTitle.textContent = data.title || "Complaint Details";
+      resultText.textContent = "Current complaint status, admin action, and student feedback appear below.";
+
+      resultBody.innerHTML = `
+        <div class="status-pill ${isResolved ? "resolved" : "pending"}">${escapeHtml(data.status || "Pending")}</div>
+
+        <div class="card-note">
+          Complaint ID: <strong>${escapeHtml(data.id)}</strong>
+        </div>
+
+        <div class="detail-grid">
+          <div class="detail-box">
+            <small>Department</small>
+            <div>${escapeHtml(data.category || "-")}</div>
+          </div>
+          <div class="detail-box">
+            <small>Created</small>
+            <div>${escapeHtml(formatDate(data.created_at))}</div>
+          </div>
+        </div>
+
+        <div class="timeline">
+          <div class="timeline-item">
+            <small>Student Complaint</small>
+            <div>${escapeHtml(data.description || "-")}</div>
+          </div>
+          <div class="timeline-item">
+            <small>Proof Attachment</small>
+            <div>${data.file ? `<a href="${encodeURI(data.file)}" target="_blank" rel="noopener noreferrer">View uploaded proof</a>` : "No proof uploaded."}</div>
+          </div>
+          <div class="timeline-item">
+            <small>Admin Action Taken</small>
+            <div>${escapeHtml(data.action || (isResolved ? "Resolved" : "No action yet"))}</div>
+          </div>
+          <div class="timeline-item">
+            <small>Action Updated On</small>
+            <div>${escapeHtml(formatDate(data.action_date || data.created_at))}</div>
+          </div>
+        </div>
+
+        <div class="feedback-box" id="feedbackSection">
+          ${renderFeedbackSection(data, hasFeedback, isResolved)}
+        </div>
       `;
 
-      if (result.status === "Resolved") {
-        currentComplaintId = result.id;
-        feedbackBox.style.display = "block";
+      const feedbackForm = document.getElementById("feedbackForm");
+      if (feedbackForm) {
+        feedbackForm.addEventListener("submit", submitFeedback);
       }
-    });
+    }
 
-    document.getElementById("submitFeedback").addEventListener("click", async () => {
-      if (!currentComplaintId) {
+    function renderFeedbackSection(data, hasFeedback, isResolved) {
+      if (hasFeedback) {
+        return `
+          <div class="timeline-item">
+            <small>Your Feedback</small>
+            <div><strong>${escapeHtml(humanizeMood(data.feedback.mood))}</strong></div>
+            <div style="margin-top:10px;">${escapeHtml(data.feedback.message || "No written feedback shared.")}</div>
+            <div style="margin-top:10px; color:#667785;">Submitted: ${escapeHtml(formatDate(data.feedback.submitted_at))}</div>
+          </div>
+        `;
+      }
+
+      if (!isResolved) {
+        return `
+          <div class="empty-state">
+            Feedback will become available once the admin resolves this complaint and records the action taken.
+          </div>
+        `;
+      }
+
+      return `
+        <h3 style="margin-bottom:12px;">Share Feedback</h3>
+        <p class="subtext" style="margin:0 0 18px;">Tell us how you feel about the resolution. This will be visible in the admin feedback panel.</p>
+        <form class="stack" id="feedbackForm">
+          <input type="hidden" name="complaintId" value="${escapeHtml(data.id)}">
+          <div>
+            <label style="margin-bottom:10px;">How was the resolution?</label>
+            <div class="mood-grid">
+              <label class="mood-option happy">
+                <input type="radio" name="mood" value="happy" required>
+                <span class="mood-card">
+                  <span class="mood-icon">😊</span>
+                  <span class="mood-label">Happy</span>
+                  <span class="mood-caption">The issue was handled well.</span>
+                </span>
+              </label>
+              <label class="mood-option okay">
+                <input type="radio" name="mood" value="okay" required>
+                <span class="mood-card">
+                  <span class="mood-icon">🙂</span>
+                  <span class="mood-label">Okay-ish</span>
+                  <span class="mood-caption">It was acceptable, but could improve.</span>
+                </span>
+              </label>
+              <label class="mood-option sad">
+                <input type="radio" name="mood" value="sad" required>
+                <span class="mood-card">
+                  <span class="mood-icon">😟</span>
+                  <span class="mood-label">Not happy</span>
+                  <span class="mood-caption">The resolution did not help enough.</span>
+                </span>
+              </label>
+            </div>
+          </div>
+          <label>Message
+            <textarea name="message" placeholder="Write what you liked or what still needs improvement"></textarea>
+          </label>
+          <button class="btn btn-secondary" type="submit">Submit Feedback</button>
+        </form>
+      `;
+    }
+
+    function humanizeMood(value) {
+      const moodMap = {
+        happy: "Happy",
+        okay: "Okay-ish",
+        sad: "Not happy",
+      };
+
+      return moodMap[value] || value || "-";
+    }
+
+    async function loadComplaintById(id) {
+      const complaintId = String(id || "").trim().toUpperCase();
+
+      if (!complaintId) {
+        setStatus("Please enter a complaint ID.", "error");
         return;
       }
 
-      if (!selectedMood) {
-        feedbackStatus.style.color = "#b91c1c";
-        feedbackStatus.textContent = "Pick an emoji mood first 😅";
-        return;
-      }
+      complaintIdInput.value = complaintId;
+      setStatus("Loading complaint status...", "");
 
-      const response = await fetch(`/feedback/${encodeURIComponent(currentComplaintId)}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          mood: selectedMood,
-          message: feedbackMessage.value.trim(),
-        }),
-      });
-
+      const response = await fetch(`/api/track/${encodeURIComponent(complaintId)}`);
       const result = await response.json();
 
       if (!response.ok) {
-        feedbackStatus.style.color = "#b91c1c";
-        feedbackStatus.textContent = result.error || "Could not save feedback.";
+        resultBody.innerHTML = `
+          <div class="empty-state">${escapeHtml(result.error || "Failed to load complaint status.")}</div>
+        `;
+        resultTitle.textContent = "Complaint Details";
+        resultText.textContent = "Search with a complaint ID to view the full status update here.";
+        setStatus(result.error || "Failed to load complaint status.", "error");
         return;
       }
 
-      feedbackStatus.style.color = "#166534";
-      feedbackStatus.textContent = "Feedback sent successfully. The admin squad has received your vibe 😎";
+      renderComplaint(result);
+      const nextUrl = `${location.pathname}?id=${encodeURIComponent(complaintId)}`;
+      window.history.replaceState({}, "", nextUrl);
+      setStatus("Complaint loaded successfully.", "success");
+    }
+
+    async function submitFeedback(event) {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const complaintId = form.elements.complaintId.value.trim();
+      setStatus("Submitting feedback...", "");
+
+      const body = new URLSearchParams({
+        mood: form.mood.value,
+        message: form.message.value.trim(),
+      });
+
+      const response = await fetch(`/feedback/${encodeURIComponent(complaintId)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body,
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        setStatus(result.error || "Failed to save feedback.", "error");
+        return;
+      }
+
+      setStatus("Feedback submitted successfully.", "success");
+      await loadComplaintById(complaintId);
+    }
+
+    trackForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await loadComplaintById(complaintIdInput.value);
     });
+
+    const queryId = new URLSearchParams(location.search).get("id");
+    if (queryId) {
+      loadComplaintById(queryId);
+    }
   </script>
 </body>
 </html>
